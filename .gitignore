@@ -6,3 +6,17 @@ vite.config.ts.*
 *.tar.gz
 *.log
 .vscode
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+
+# WhatsApp auth files (contains sensitive session data)
+auth/
+
+# Upload files
+uploads/
+
+# Random files
+random.txt

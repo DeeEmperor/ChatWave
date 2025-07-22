@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertMessageSchema, insertMessageStatusSchema } from "@shared/schema";
+import { insertMessageSchema, insertMessageStatusSchema } from "./shared/schema.js";
 import multer from 'multer';
 
 const upload = multer({ dest: 'uploads/' });
