@@ -5,7 +5,7 @@
   "scripts": {
     "start": "tsx index.ts",
     "dev": "tsx index.ts",
-    "build": "echo 'No build step needed - using tsx for runtime'",
+    "build": "echo 'Build skipped - using tsx runtime compilation'",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
@@ -28,8 +28,6 @@
     "@types/express": "4.17.21",
     "@types/node": "20.16.11",
     "@types/ws": "^8.5.13",
-    "@types/multer": "^1.4.12",
-    "drizzle-kit": "^0.30.4",
-    "typescript": "5.6.3"
+    "@types/multer": "^1.4.12"
   }
 }
