@@ -3,7 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import io from "socket.io-client";
 
-const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000"); 
+const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
+  transports: ['websocket', 'polling'],
+  timeout: 20000,
+});
+
+// Debug Socket.IO connection
+socket.on("connect", () => {
+  console.log("✅ Socket.IO connected:", socket.id);
+});
+
+socket.on("disconnect", () => {
+  console.log("❌ Socket.IO disconnected");
+});
+
+socket.on("connect_error", (error) => {
+  console.error("❌ Socket.IO connection error:", error);
+}); 
 
 export default function QRCodeBox() {
   const [isConnected, setIsConnected] = useState(false);
@@ -31,6 +47,7 @@ export default function QRCodeBox() {
   useEffect(() => {
     // Listen for QR code from the backend
     socket.on("qr", (qrImageUrl) => {
+      console.log("📱 QR code received from backend, length:", qrImageUrl?.length);
       setQrCode(qrImageUrl);
       setIsGenerating(false);
       toast({
@@ -66,12 +83,15 @@ export default function QRCodeBox() {
   }, [toast]);
 
   const handleGenerateQR = async () => {
+    console.log("🔄 Generating QR code...");
     setIsGenerating(true);
     setQrCode(null); // Clear any existing QR code
     try {
       // Emit WebSocket event to generate a new QR code
+      console.log("📤 Emitting generate-new-qr event");
       socket.emit("generate-new-qr");
     } catch (error) {
+      console.error("❌ Error generating QR:", error);
       setIsGenerating(false);
       toast({
         title: "Error",

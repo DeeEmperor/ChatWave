@@ -36,9 +36,11 @@ export function setupSocket(io) {
         const { qr, connection, lastDisconnect } = update;
 
         if (qr) {
-          console.log("QR Code generated");
+          console.log("QR Code generated, emitting to clients...");
           const qrImageUrl = await QRCode.toDataURL(qr);
+          console.log("QR code data URL length:", qrImageUrl.length);
           io.emit("qr", qrImageUrl);
+          console.log("QR code emitted to all connected clients");
         }
 
         if (connection === "open") {
@@ -68,6 +70,7 @@ export function setupSocket(io) {
 
   io.on("connection", (socket) => {
     console.log("a user connected with id:", socket.id);
+    console.log("Total connected clients:", io.engine.clientsCount);
 
     // Listen for "generate-new-qr" event from the frontend
     socket.on("generate-new-qr", async () => {

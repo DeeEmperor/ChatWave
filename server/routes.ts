@@ -46,6 +46,15 @@ let qrCodeData = "mock-qr-code-data";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Root endpoint - health check
+  app.get("/", (req, res) => {
+    res.status(200).json({ 
+      message: "WhatsApp Bulk Sender API", 
+      status: "running",
+      whatsapp_connected: isWhatsAppConnected()
+    });
+  });
+  
   // Get QR code for WhatsApp authentication
   app.get("/api/qr", (req, res) => {
     if (isWhatsAppConnected()) {
