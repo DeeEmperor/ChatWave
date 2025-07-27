@@ -5,6 +5,6 @@
   "installCommand": "npm install",
   "framework": "vite",
   "env": {
-    "VITE_API_URL": "https://your-render-backend-url.onrender.com"
+    "VITE_API_URL": "https://chatwave-64p3.onrender.com"
   }
 }
