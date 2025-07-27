@@ -11,7 +11,11 @@ const httpServer = createServer(app);
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: "*",
+    origin: process.env.NODE_ENV === "production" 
+      ? ["https://your-vercel-app-url.vercel.app"] 
+      : "*",
+    methods: ["GET", "POST"],
+    credentials: true
   },
 });
 

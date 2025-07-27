@@ -3,5 +3,8 @@
   "buildCommand": "npm run build:frontend",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "env": {
+    "VITE_API_URL": "https://your-render-backend-url.onrender.com"
+  }
 }
