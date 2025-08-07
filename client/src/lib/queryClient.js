@@ -2,7 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 // API base URL - this is for render
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  window.location.hostname === 'localhost' 
+  window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
     ? "http://localhost:5000"
     : "https://chatwave-64p3.onrender.com"
 );

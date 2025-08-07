@@ -126,7 +126,7 @@ export default function Home() {
               </Badge>
               <div className="text-sm text-gray-600 hidden sm:block">
                 API: {import.meta.env.VITE_API_URL || (
-                  window.location.hostname === 'localhost' 
+                  window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                     ? "localhost:5000"
                     : "https://chatwave-64p3.onrender.com"
                 )}
