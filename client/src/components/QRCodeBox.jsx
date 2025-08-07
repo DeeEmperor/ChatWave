@@ -67,9 +67,18 @@ export default function QRCodeBox() {
   }, [connectionStatus]);
 
   useEffect(() => {
+    console.log("🔧 Setting up Socket.IO event listeners...");
+    
     // Listen for QR code from the backend
     socket.on("qr", (qrImageUrl) => {
-      console.log("📱 QR code received from backend, length:", qrImageUrl?.length);
+      console.log("📱 QR code received from backend!");
+      console.log("🔍 QR data details:", {
+        received: !!qrImageUrl,
+        length: qrImageUrl?.length,
+        type: typeof qrImageUrl,
+        starts_with: qrImageUrl?.substring(0, 50)
+      });
+      
       setQrCode(qrImageUrl);
       setIsGenerating(false);
       setConnectionAttempts(prev => prev + 1);
@@ -204,7 +213,10 @@ export default function QRCodeBox() {
           </Button>
         </div>
 
-        {qrCode && (
+        {(() => {
+          console.log("🖼️ QR Code render check:", { qrCode: !!qrCode, qrCodeLength: qrCode?.length });
+          return qrCode;
+        })() && (
           <>
             <Separator />
             <div className="text-center">
@@ -213,6 +225,8 @@ export default function QRCodeBox() {
                   src={qrCode} 
                   alt="WhatsApp QR Code" 
                   className="mx-auto max-w-full h-auto rounded-lg shadow-sm"
+                  onLoad={() => console.log("✅ QR image loaded successfully")}
+                  onError={(e) => console.error("❌ QR image failed to load:", e)}
                 />
               </div>
               <p className="text-sm text-gray-600 mb-4">
