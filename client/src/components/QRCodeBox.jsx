@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { QrCode, Wifi, WifiOff, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
+import { QrCode, Wifi, WifiOff, RotateCcw, CheckCircle2, Loader2, Smartphone, Monitor, ExternalLink } from "lucide-react";
 
 // Force production URL when deployed
 const apiUrl = import.meta.env.VITE_API_URL || 
@@ -44,11 +44,18 @@ socket.on("connect_error", (error) => {
   console.error("❌ Socket.IO connection error:", error);
 }); 
 
+// Mobile device detection
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (window.innerWidth <= 768);
+};
+
 export default function QRCodeBox() {
   const [isConnected, setIsConnected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [qrCode, setQrCode] = useState(null);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
 
   const { data: qrData, refetch } = useQuery({
@@ -68,6 +75,15 @@ export default function QRCodeBox() {
       setConnectionAttempts(0);
     }
   }, [connectionStatus]);
+
+  useEffect(() => {
+    // Check if mobile on mount and window resize
+    const checkMobile = () => setIsMobile(isMobileDevice());
+    checkMobile();
+    
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     console.log("🔧 Setting up Socket.IO event listeners...");
@@ -159,6 +175,56 @@ export default function QRCodeBox() {
             Online & Ready
           </Badge>
         </CardContent>
+        </div>
+      </Card>
+    );
+  }
+
+  // Mobile device warning
+  if (isMobile) {
+    return (
+      <Card className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-100 border-orange-300 shadow-xl shadow-orange-500/20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/10"></div>
+        <div className="relative z-10">
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl flex items-center justify-center shadow-2xl">
+              <Smartphone className="w-10 h-10 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-700 to-amber-700 bg-clip-text text-transparent flex items-center justify-center gap-3">
+              <Monitor className="w-6 h-6 text-orange-600" />
+              Use Desktop for QR Code
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-6">
+            <p className="text-orange-700 text-lg leading-relaxed">
+              📱➡️💻 QR codes need to be scanned from a different device
+            </p>
+            
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">How to Connect:</h4>
+              <ol className="text-blue-700 text-sm space-y-2 text-left">
+                <li>1. Open this app on your desktop/laptop</li>
+                <li>2. Generate the QR code there</li>
+                <li>3. Scan it with this mobile device's WhatsApp</li>
+              </ol>
+            </div>
+
+            <Button 
+              onClick={() => {
+                const currentUrl = window.location.href;
+                navigator.clipboard?.writeText(currentUrl);
+                toast({
+                  title: "URL Copied!",
+                  description: "Share this link to open on desktop",
+                });
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              size="lg"
+            >
+              <ExternalLink className="w-5 h-5 mr-3" />
+              <span className="font-medium">Copy Link for Desktop</span>
+            </Button>
+          </CardContent>
         </div>
       </Card>
     );
