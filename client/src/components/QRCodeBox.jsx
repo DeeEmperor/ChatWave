@@ -2,8 +2,17 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import io from "socket.io-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { QrCode, Wifi, WifiOff, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
 
-const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
+const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+console.log("🔗 Connecting to Socket.IO at:", apiUrl);
+console.log("🔗 Environment variables:", import.meta.env);
+
+const socket = io(apiUrl, {
   transports: ['websocket', 'polling'],
   timeout: 20000,
 });
@@ -24,13 +33,14 @@ socket.on("connect_error", (error) => {
 export default function QRCodeBox() {
   const [isConnected, setIsConnected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [qrCode, setQrCode] = useState(null); // State for the QR code image
+  const [qrCode, setQrCode] = useState(null);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
   const { toast } = useToast();
 
   const { data: qrData, refetch } = useQuery({
     queryKey: ["/api/qr"],
     refetchInterval: isConnected ? false : 3000,
-    enabled: false, // Disable automatic fetching
+    enabled: false,
   });
 
   const { data: connectionStatus } = useQuery({
@@ -41,6 +51,7 @@ export default function QRCodeBox() {
   useEffect(() => {
     if (connectionStatus?.connected) {
       setIsConnected(true);
+      setConnectionAttempts(0);
     }
   }, [connectionStatus]);
 
@@ -50,6 +61,7 @@ export default function QRCodeBox() {
       console.log("📱 QR code received from backend, length:", qrImageUrl?.length);
       setQrCode(qrImageUrl);
       setIsGenerating(false);
+      setConnectionAttempts(prev => prev + 1);
       toast({
         title: "QR Code Generated",
         description: "New QR code generated. Scan with WhatsApp to connect.",
@@ -59,7 +71,8 @@ export default function QRCodeBox() {
     // Listen for connection status updates
     socket.on("connected", () => {
       setIsConnected(true);
-      setQrCode(null); // Clear QR code when connected
+      setQrCode(null);
+      setConnectionAttempts(0);
       toast({
         title: "Connected!",
         description: "WhatsApp Web is connected and ready to send messages.",
@@ -85,9 +98,8 @@ export default function QRCodeBox() {
   const handleGenerateQR = async () => {
     console.log("🔄 Generating QR code...");
     setIsGenerating(true);
-    setQrCode(null); // Clear any existing QR code
+    setQrCode(null);
     try {
-      // Emit WebSocket event to generate a new QR code
       console.log("📤 Emitting generate-new-qr event");
       socket.emit("generate-new-qr");
     } catch (error) {
@@ -103,202 +115,112 @@ export default function QRCodeBox() {
 
   if (isConnected) {
     return (
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i className="fas fa-check-circle text-green-600 text-2xl"></i>
+      <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 border-emerald-200 shadow-lg shadow-emerald-500/20 relative overflow-hidden card-hover glow-green">
+        <div className="absolute inset-0 bg-dots-pattern opacity-10"></div>
+        <div className="relative z-10">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <CheckCircle2 className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-green-800 flex items-center justify-center gap-2">
+            <Wifi className="w-5 h-5" />
+            WhatsApp Connected
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-green-700 mb-4">
+            Your WhatsApp Web is connected and ready to send messages.
+          </p>
+          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+            Online & Ready
+          </Badge>
+        </CardContent>
         </div>
-        <h3 className="text-lg font-semibold text-green-900 mb-2">Connected!</h3>
-        <p className="text-sm text-gray-600 mb-4">WhatsApp Web is connected and ready to send messages.</p>
-        <div className="flex items-center justify-center space-x-2 text-sm text-green-600">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span>Online - Ready to send</span>
-        </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div>
-      <p className="text-sm text-gray-600 mb-6">
-        Generate a QR code to connect your WhatsApp account
-      </p>
-      <button
-        onClick={handleGenerateQR}
-        disabled={isGenerating}
-        className="w-full bg-whatsapp hover:bg-whatsapp-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-      >
-        {isGenerating ? (
+    <Card className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 border-blue-200/50 shadow-lg shadow-blue-500/10 relative overflow-hidden card-hover glow-blue">
+      <div className="absolute inset-0 bg-wave-pattern opacity-5"></div>
+      <div className="relative z-10">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-gray-800">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <QrCode className="w-5 h-5 text-blue-600" />
+          </div>
+          WhatsApp Connection
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="text-center">
+          <div className="mb-4 flex items-center justify-center">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+              <WifiOff className="w-6 h-6 text-gray-400" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Your WhatsApp</h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Generate a QR code to link your WhatsApp account for bulk messaging
+          </p>
+
+          {connectionAttempts > 0 && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-700">
+                Attempt #{connectionAttempts} - QR code expires in 60 seconds
+              </p>
+            </div>
+          )}
+
+          <Button 
+            onClick={handleGenerateQR}
+            disabled={isGenerating}
+            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md"
+            size="lg"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating QR Code...
+              </>
+            ) : (
+              <>
+                <QrCode className="w-4 h-4 mr-2" />
+                Generate QR Code
+              </>
+            )}
+          </Button>
+        </div>
+
+        {qrCode && (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span>Generating...</span>
-          </>
-        ) : (
-          <>
-            <i className="fas fa-qrcode"></i>
-            <span>Generate QR Code</span>
+            <Separator />
+            <div className="text-center">
+              <div className="mb-4 p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                <img 
+                  src={qrCode} 
+                  alt="WhatsApp QR Code" 
+                  className="mx-auto max-w-full h-auto rounded-lg shadow-sm"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                📱 <strong>Scan with WhatsApp:</strong> Open WhatsApp → Settings → Linked Devices → Link a Device
+              </p>
+              <Button
+                onClick={handleGenerateQR}
+                variant="outline"
+                size="sm"
+                className="text-gray-600 border-gray-300"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Generate New Code
+              </Button>
+            </div>
           </>
         )}
-      </button>
-      {qrCode && (
-        <div className="mt-6">
-          <img src={qrCode} alt="WhatsApp QR Code" className="mx-auto" />
-        </div>
-      )}
-    </div>
+      </CardContent>
+      </div>
+    </Card>
   );
 }
-
-
-
-// import { useState, useEffect } from 'react';
-// import { useQuery } from '@tanstack/react-query';
-// import { useToast } from '@/hooks/use-toast';
-
-// export default function QRCodeBox() {
-//   const [isConnected, setIsConnected] = useState(false);
-//   const [isGenerating, setIsGenerating] = useState(false);
-//   const { toast } = useToast();
-
-//   const { data: qrData, refetch } = useQuery({
-//     queryKey: ['/api/qr'],
-//     refetchInterval: isConnected ? false : 3000,
-//     enabled: false, // Disable automatic fetching
-//   });
-
-//   const { data: connectionStatus } = useQuery({
-//     queryKey: ['/api/connection-status'],
-//     refetchInterval: 2000,
-//   });
-
-//   useEffect(() => {
-//     if (connectionStatus?.connected) {
-//       setIsConnected(true);
-//     }
-//   }, [connectionStatus]);
-
-//   const handleGenerateQR = async () => {
-//     setIsGenerating(true);
-//     try {
-//       await refetch();
-//       toast({
-//         title: "QR Code Generated",
-//         description: "New QR code generated. Scan with WhatsApp to connect.",
-//       });
-//     } catch (error) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to generate QR code. Please try again.",
-//         variant: "destructive",
-//       });
-//     } finally {
-//       setIsGenerating(false);
-//     }
-//   };
-
-//   if (isConnected || qrData?.connected) {
-//     return (
-//       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//         <div className="flex items-center space-x-3 mb-6">
-//           <div className="w-8 h-8 bg-whatsapp rounded-lg flex items-center justify-center">
-//             <i className="fab fa-whatsapp text-white"></i>
-//           </div>
-//           <h2 className="text-lg font-semibold text-gray-900">WhatsApp Connection</h2>
-//         </div>
-
-//         <div className="text-center">
-//           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//             <i className="fas fa-check-circle text-green-600 text-2xl"></i>
-//           </div>
-//           <h3 className="text-lg font-semibold text-green-900 mb-2">Connected!</h3>
-//           <p className="text-sm text-gray-600 mb-4">WhatsApp Web is connected and ready to send messages.</p>
-//           <div className="flex items-center justify-center space-x-2 text-sm text-green-600">
-//             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-//             <span>Online - Ready to send</span>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//       <div className="flex items-center space-x-3 mb-6">
-//         <div className="w-8 h-8 bg-whatsapp rounded-lg flex items-center justify-center">
-//           <i className="fab fa-whatsapp text-white"></i>
-//         </div>
-//         <h2 className="text-lg font-semibold text-gray-900">WhatsApp Connection</h2>
-//       </div>
-
-//       <div className="text-center">
-//         {qrData && !qrData.connected ? (
-//           // Show QR Code when generated
-//           <>
-//             <div className="bg-gray-50 rounded-lg p-6 mb-4">
-//               <div className="w-48 h-48 mx-auto bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center">
-//                 <div className="text-center">
-//                   <div className="grid grid-cols-8 gap-1 mb-3">
-//                     {Array.from({ length: 24 }, (_, i) => (
-//                       <div 
-//                         key={i} 
-//                         className={`w-2 h-2 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`}
-//                       ></div>
-//                     ))}
-//                   </div>
-//                   <p className="text-xs text-gray-500">QR Code</p>
-//                 </div>
-//               </div>
-//             </div>
-//             <p className="text-sm text-gray-600 mb-4">Scan with WhatsApp to connect</p>
-//             <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-4">
-//               <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-//               <span>Waiting for scan...</span>
-//             </div>
-//             <button
-//               onClick={handleGenerateQR}
-//               disabled={isGenerating}
-//               className="w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-//             >
-//               {isGenerating ? (
-//                 <>
-//                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-//                   <span>Generating...</span>
-//                 </>
-//               ) : (
-//                 <>
-//                   <i className="fas fa-refresh"></i>
-//                   <span>Generate New QR Code</span>
-//                 </>
-//               )}
-//             </button>
-//           </>
-//         ) : (
-//           // Show Generate Button when no QR code
-//           <div className="py-8">
-//             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//               <i className="fab fa-whatsapp text-gray-400 text-2xl"></i>
-//             </div>
-//             <h3 className="text-lg font-medium text-gray-900 mb-2">Connect WhatsApp</h3>
-//             <p className="text-sm text-gray-600 mb-6">Generate a QR code to connect your WhatsApp account</p>
-//             <button
-//               onClick={handleGenerateQR}
-//               disabled={isGenerating}
-//               className="w-full bg-whatsapp hover:bg-whatsapp-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-//             >
-//               {isGenerating ? (
-//                 <>
-//                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-//                   <span>Generating...</span>
-//                 </>
-//               ) : (
-//                 <>
-//                   <i className="fas fa-qrcode"></i>
-//                   <span>Generate QR Code</span>
-//                 </>
-//               )}
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }

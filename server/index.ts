@@ -11,7 +11,13 @@ const httpServer = createServer(app);
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: "*",
+    origin: process.env.NODE_ENV === "production" 
+      ? [
+          "https://chatwave-64p3.onrender.com",
+          "https://chat-wave-pearl.vercel.app",
+          /^https:\/\/.*\.vercel\.app$/
+        ]
+      : "*",
     methods: ["GET", "POST"],
     credentials: true
   },

@@ -51,7 +51,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ 
       message: "WhatsApp Bulk Sender API", 
       status: "running",
-      whatsapp_connected: isWhatsAppConnected()
+      whatsapp_connected: isWhatsAppConnected(),
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Test endpoint for debugging
+  app.get("/api/test", (req, res) => {
+    res.status(200).json({
+      message: "API is working",
+      whatsapp_connected: isWhatsAppConnected(),
+      cors_origin: req.headers.origin,
+      timestamp: new Date().toISOString()
     });
   });
   
