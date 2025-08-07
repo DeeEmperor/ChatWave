@@ -167,12 +167,15 @@ export default function QRCodeBox() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="text-green-700 mb-6 text-lg leading-relaxed">
-            🎉 Your WhatsApp Web is connected and ready to send professional messages.
+          <p className="text-green-700 mb-4 text-lg leading-relaxed">
+            🎉 Great! Your WhatsApp is now connected.
+          </p>
+          <p className="text-green-600 mb-6 text-sm">
+            You can now send messages to multiple contacts at once!
           </p>
           <Badge variant="outline" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-400 px-4 py-2 text-sm font-medium">
             <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse shadow-sm"></div>
-            Online & Ready
+            Connected & Ready
           </Badge>
         </CardContent>
         </div>
@@ -192,21 +195,38 @@ export default function QRCodeBox() {
             </div>
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-700 to-amber-700 bg-clip-text text-transparent flex items-center justify-center gap-3">
               <Monitor className="w-6 h-6 text-orange-600" />
-              Use Desktop for QR Code
+              Need a Computer?
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <p className="text-orange-700 text-lg leading-relaxed">
-              📱➡️💻 QR codes need to be scanned from a different device
+              📱 You're on your phone! QR codes need to be scanned, not viewed.
             </p>
             
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">How to Connect:</h4>
-              <ol className="text-blue-700 text-sm space-y-2 text-left">
-                <li>1. Open this app on your desktop/laptop</li>
-                <li>2. Generate the QR code there</li>
-                <li>3. Scan it with this mobile device's WhatsApp</li>
-              </ol>
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-left">
+              <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                💡 Here's what to do:
+              </h4>
+              <div className="space-y-3 text-blue-700 text-sm">
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  <span>Open this website on your computer or laptop</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  <span>Click "Generate QR Code" on the computer</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  <span>Use this phone to scan the QR code from the computer screen</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+              <p className="text-green-700 text-sm">
+                💡 <strong>Pro Tip:</strong> Copy this link and send it to yourself to open on computer
+              </p>
             </div>
 
             <Button 
@@ -214,15 +234,15 @@ export default function QRCodeBox() {
                 const currentUrl = window.location.href;
                 navigator.clipboard?.writeText(currentUrl);
                 toast({
-                  title: "URL Copied!",
-                  description: "Share this link to open on desktop",
+                  title: "Link Copied! 📋",
+                  description: "Now open this link on your computer",
                 });
               }}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               size="lg"
             >
               <ExternalLink className="w-5 h-5 mr-3" />
-              <span className="font-medium">Copy Link for Desktop</span>
+              <span className="font-medium">Copy Website Link</span>
             </Button>
           </CardContent>
         </div>
@@ -252,9 +272,29 @@ export default function QRCodeBox() {
             </div>
           </div>
           <h3 className="text-xl font-bold text-slate-800 mb-3">Connect Your WhatsApp</h3>
-          <p className="text-slate-600 mb-6 leading-relaxed">
-            Generate a secure QR code to link your WhatsApp account for professional bulk messaging
+          <p className="text-slate-600 mb-4 leading-relaxed">
+            Link your WhatsApp to send messages to multiple contacts at once
           </p>
+          
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-left">
+            <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+              📋 Simple 3-Step Process:
+            </h4>
+            <div className="space-y-2 text-blue-700 text-sm">
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                <span>Click "Generate QR Code" below</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                <span>Open WhatsApp on your phone → Settings → Linked Devices</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                <span>Tap "Link a Device" and scan the QR code</span>
+              </div>
+            </div>
+          </div>
 
           {qrCode && (
             <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
@@ -301,9 +341,14 @@ export default function QRCodeBox() {
                 />
               </div>
               <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg">
-                <p className="text-emerald-700 font-medium flex items-center justify-center gap-2">
-                  📱 <span><strong>Scan with WhatsApp:</strong> Settings → Linked Devices → Link a Device</span>
-                </p>
+                <h4 className="font-semibold text-emerald-800 mb-2 flex items-center justify-center gap-2">
+                  📱 Ready to scan? Here's how:
+                </h4>
+                <div className="text-emerald-700 text-sm space-y-1">
+                  <p>1. Open WhatsApp on your phone</p>
+                  <p>2. Go to Settings → Linked Devices</p>
+                  <p>3. Tap "Link a Device" and scan this QR code</p>
+                </div>
               </div>
               <Button
                 onClick={handleGenerateQR}
