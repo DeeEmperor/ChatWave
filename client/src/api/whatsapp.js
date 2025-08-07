@@ -1,9 +1,16 @@
 import { apiRequest } from '../lib/queryClient';
 
+// API base URL fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  window.location.hostname === 'localhost' 
+    ? "http://localhost:5000"
+    : "https://chatwave-64p3.onrender.com"
+);
+
 export const whatsappApi = {
   // Get QR code for WhatsApp authentication
   getQRCode: async () => {
-    const response = await fetch('/api/qr');
+    const response = await fetch(`${API_BASE_URL}/api/qr`);
     if (!response.ok) {
       throw new Error('Failed to fetch QR code');
     }
@@ -12,7 +19,7 @@ export const whatsappApi = {
 
   // Check WhatsApp connection status
   getConnectionStatus: async () => {
-    const response = await fetch('/api/connection-status');
+    const response = await fetch(`${API_BASE_URL}/api/connection-status`);
     if (!response.ok) {
       throw new Error('Failed to check connection status');
     }
@@ -26,7 +33,7 @@ export const whatsappApi = {
 
   // Upload CSV file
   uploadCSV: async (formData) => {
-    const response = await fetch('/api/upload', {
+    const response = await fetch(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -38,7 +45,7 @@ export const whatsappApi = {
 
   // Get message status
   getMessageStatus: async (messageId) => {
-    const response = await fetch(`/api/message/${messageId}/status`);
+    const response = await fetch(`${API_BASE_URL}/api/message/${messageId}/status`);
     if (!response.ok) {
       throw new Error('Failed to get message status');
     }
@@ -47,7 +54,7 @@ export const whatsappApi = {
 
   // Get all statuses for real-time updates
   getAllStatuses: async () => {
-    const response = await fetch('/api/statuses');
+    const response = await fetch(`${API_BASE_URL}/api/statuses`);
     if (!response.ok) {
       throw new Error('Failed to get statuses');
     }
@@ -56,7 +63,7 @@ export const whatsappApi = {
 
   // Get statistics
   getStatistics: async () => {
-    const response = await fetch('/api/statistics');
+    const response = await fetch(`${API_BASE_URL}/api/statistics`);
     if (!response.ok) {
       throw new Error('Failed to get statistics');
     }

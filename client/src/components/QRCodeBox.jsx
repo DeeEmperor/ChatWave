@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { QrCode, Wifi, WifiOff, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
 
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const apiUrl = import.meta.env.VITE_API_URL || (
+  window.location.hostname === 'localhost' 
+    ? "http://localhost:5000"
+    : "https://chatwave-64p3.onrender.com"
+);
 console.log("🔗 Connecting to Socket.IO at:", apiUrl);
 console.log("🔗 Environment variables:", import.meta.env);
 
