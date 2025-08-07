@@ -124,13 +124,7 @@ export default function Home() {
                 <Activity className="w-3 h-3 mr-1" />
                 System Online
               </Badge>
-              <div className="text-sm text-gray-600 hidden sm:block">
-                API: {import.meta.env.VITE_API_URL || (
-                  window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
-                    ? "localhost:5000"
-                    : "https://chatwave-64p3.onrender.com"
-                )}
-              </div>
+
             </div>
           </div>
         </div>

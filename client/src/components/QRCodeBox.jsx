@@ -138,24 +138,24 @@ export default function QRCodeBox() {
 
   if (isConnected) {
     return (
-      <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 border-emerald-200 shadow-lg shadow-emerald-500/20 relative overflow-hidden card-hover glow-green">
-        <div className="absolute inset-0 bg-dots-pattern opacity-10"></div>
+      <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 border-emerald-300 shadow-xl shadow-emerald-500/30 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/15"></div>
         <div className="relative z-10">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <CheckCircle2 className="w-8 h-8 text-white" />
+        <CardHeader className="text-center pb-6">
+          <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-green-500 via-emerald-600 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3">
+            <CheckCircle2 className="w-10 h-10 text-white" />
           </div>
-          <CardTitle className="text-green-800 flex items-center justify-center gap-2">
-            <Wifi className="w-5 h-5" />
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent flex items-center justify-center gap-3">
+            <Wifi className="w-6 h-6 text-green-600" />
             WhatsApp Connected
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="text-green-700 mb-4">
-            Your WhatsApp Web is connected and ready to send messages.
+          <p className="text-green-700 mb-6 text-lg leading-relaxed">
+            🎉 Your WhatsApp Web is connected and ready to send professional messages.
           </p>
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+          <Badge variant="outline" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-400 px-4 py-2 text-sm font-medium">
+            <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse shadow-sm"></div>
             Online & Ready
           </Badge>
         </CardContent>
@@ -165,33 +165,35 @@ export default function QRCodeBox() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 border-blue-200/50 shadow-lg shadow-blue-500/10 relative overflow-hidden card-hover glow-blue">
-      <div className="absolute inset-0 bg-wave-pattern opacity-5"></div>
+    <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 border-blue-300 shadow-xl shadow-blue-500/20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10"></div>
       <div className="relative z-10">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-gray-800">
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <QrCode className="w-5 h-5 text-blue-600" />
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-3 text-slate-800">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <QrCode className="w-6 h-6 text-white" />
           </div>
-          WhatsApp Connection
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            WhatsApp Connection
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="text-center">
-          <div className="mb-4 flex items-center justify-center">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-              <WifiOff className="w-6 h-6 text-gray-400" />
+          <div className="mb-6 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center shadow-md border-2 border-red-200">
+              <WifiOff className="w-8 h-8 text-red-500" />
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Your WhatsApp</h3>
-          <p className="text-sm text-gray-600 mb-6">
-            Generate a QR code to link your WhatsApp account for bulk messaging
+          <h3 className="text-xl font-bold text-slate-800 mb-3">Connect Your WhatsApp</h3>
+          <p className="text-slate-600 mb-6 leading-relaxed">
+            Generate a secure QR code to link your WhatsApp account for professional bulk messaging
           </p>
 
-          {connectionAttempts > 0 && (
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-700">
-                Attempt #{connectionAttempts} - QR code expires in 60 seconds
+          {qrCode && (
+            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
+              <p className="text-sm text-blue-700 font-medium">
+                ⏱️ QR code expires in 60 seconds
               </p>
             </div>
           )}
@@ -199,18 +201,18 @@ export default function QRCodeBox() {
           <Button 
             onClick={handleGenerateQR}
             disabled={isGenerating}
-            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md"
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
             size="lg"
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating QR Code...
+                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                <span className="font-medium">Generating QR Code...</span>
               </>
             ) : (
               <>
-                <QrCode className="w-4 h-4 mr-2" />
-                Generate QR Code
+                <QrCode className="w-5 h-5 mr-3" />
+                <span className="font-medium">Generate QR Code</span>
               </>
             )}
           </Button>
@@ -221,28 +223,30 @@ export default function QRCodeBox() {
           return qrCode;
         })() && (
           <>
-            <Separator />
+            <Separator className="bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
             <div className="text-center">
-              <div className="mb-4 p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+              <div className="mb-6 p-6 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50 rounded-2xl border-2 border-dashed border-blue-300 shadow-inner">
                 <img 
                   src={qrCode} 
                   alt="WhatsApp QR Code" 
-                  className="mx-auto max-w-full h-auto rounded-lg shadow-sm"
+                  className="mx-auto max-w-full h-auto rounded-xl shadow-lg border-4 border-white"
                   onLoad={() => console.log("✅ QR image loaded successfully")}
                   onError={(e) => console.error("❌ QR image failed to load:", e)}
                 />
               </div>
-              <p className="text-sm text-gray-600 mb-4">
-                📱 <strong>Scan with WhatsApp:</strong> Open WhatsApp → Settings → Linked Devices → Link a Device
-              </p>
+              <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg">
+                <p className="text-emerald-700 font-medium flex items-center justify-center gap-2">
+                  📱 <span><strong>Scan with WhatsApp:</strong> Settings → Linked Devices → Link a Device</span>
+                </p>
+              </div>
               <Button
                 onClick={handleGenerateQR}
                 variant="outline"
                 size="sm"
-                className="text-gray-600 border-gray-300"
+                className="text-slate-600 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-colors"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Generate New Code
+                <span className="font-medium">Generate New Code</span>
               </Button>
             </div>
           </>
