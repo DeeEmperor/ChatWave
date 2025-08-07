@@ -1,11 +1,12 @@
 import { apiRequest } from '../lib/queryClient';
 
 // API base URL fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || (
-  window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('chat-wave'))
+    ? "https://chatwave-64p3.onrender.com"
+    : window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
     ? "http://localhost:5000"
-    : "https://chatwave-64p3.onrender.com"
-);
+    : "https://chatwave-64p3.onrender.com";
 
 export const whatsappApi = {
   // Get QR code for WhatsApp authentication

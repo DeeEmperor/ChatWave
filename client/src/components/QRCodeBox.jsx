@@ -8,19 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { QrCode, Wifi, WifiOff, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
 
+// Force production URL when deployed
+const apiUrl = import.meta.env.VITE_API_URL || 
+  (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('chat-wave'))
+    ? "https://chatwave-64p3.onrender.com"
+    : window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+    ? "http://localhost:5000"
+    : "https://chatwave-64p3.onrender.com";
+
 console.log("🔍 Debug info:", {
   hostname: window.location.hostname,
   origin: window.location.origin,
   VITE_API_URL: import.meta.env.VITE_API_URL,
   NODE_ENV: import.meta.env.NODE_ENV,
-  MODE: import.meta.env.MODE
+  MODE: import.meta.env.MODE,
+  finalApiUrl: apiUrl
 });
-
-const apiUrl = import.meta.env.VITE_API_URL || (
-  window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
-    ? "http://localhost:5000"
-    : "https://chatwave-64p3.onrender.com"
-);
 console.log("🔗 Connecting to Socket.IO at:", apiUrl);
 
 const socket = io(apiUrl, {
