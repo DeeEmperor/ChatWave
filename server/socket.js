@@ -21,7 +21,9 @@ export function setupSocket(io) {
 
   async function startSocket() {
     try {
-      const { state, saveCreds } = await useMultiFileAuthState("auth");
+      // Use temporary auth directory in production environments
+      const authDir = process.env.NODE_ENV === 'production' ? `/tmp/auth-${Date.now()}` : "auth";
+      const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
       sock = makeWASocket({
         auth: state,
@@ -80,14 +82,36 @@ export function setupSocket(io) {
         sock.end();
       }
 
-      // Clear auth state to force new QR generation
+      // Clear auth state to force new QR generation  
       try {
-        if (fs.existsSync("auth")) {
-          fs.rmSync("auth", { recursive: true, force: true });
+        const authDir = process.env.NODE_ENV === 'production' ? '/tmp' : '.';
+        const authPattern = process.env.NODE_ENV === 'production' ? 'auth-*' : 'auth';
+        
+        if (process.env.NODE_ENV === 'production') {
+          // In production, clean up temp auth directories
+          const files = fs.readdirSync('/tmp').filter(f => f.startsWith('auth-'));
+          files.forEach(file => {
+            try {
+              fs.rmSync(`/tmp/${file}`, { recursive: true, force: true });
+            } catch (e) {
+              console.log(`Failed to remove ${file}:`, e.message);
+            }
+          });
+        } else {
+          // In development, remove auth directory
+          if (fs.existsSync("auth")) {
+            fs.rmSync("auth", { recursive: true, force: true });
+          }
         }
       } catch (error) {
-        console.log("Error clearing auth:", error);
+        console.log("Error clearing auth (this is expected in production):", error);
+        // In production environments like Render, file operations may fail
+        // This is expected and shouldn't prevent QR generation
       }
+
+      // Reset connection state
+      connectionState.isConnected = false;
+      whatsappSocket = null;
 
       // Start fresh socket
       await startSocket();
