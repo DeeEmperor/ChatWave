@@ -192,7 +192,7 @@ export default function ComposeCard({ onStatsUpdate }) {
     if (onStatsUpdate) {
       onStatsUpdate({ totalContacts: contactCount });
     }
-  }, [phoneNumbers, inputMethod, onStatsUpdate]);
+  }, [phoneNumbers, inputMethod, csvData]); // Remove onStatsUpdate from dependencies
 
   return (
     <div className="cw-compose cw-fade-in-up">

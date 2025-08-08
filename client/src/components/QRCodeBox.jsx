@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useNotification } from "./NotificationContainer";
 import io from "socket.io-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ export default function QRCodeBox() {
   const [qrCode, setQrCode] = useState(null);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const { toast } = useToast();
+  const { addNotification } = useNotification();
 
   const { data: qrData, refetch } = useQuery({
     queryKey: ["/api/qr"],
@@ -64,17 +64,7 @@ export default function QRCodeBox() {
     enabled: false,
   });
 
-  const { data: connectionStatus } = useQuery({
-    queryKey: ["/api/connection-status"],
-    refetchInterval: 2000,
-  });
-
-  useEffect(() => {
-    if (connectionStatus?.connected) {
-      setIsConnected(true);
-      setConnectionAttempts(0);
-    }
-  }, [connectionStatus]);
+  // Remove HTTP polling - we use Socket.IO events for real-time connection status
 
   useEffect(() => {
     // Check if mobile on mount and window resize
@@ -101,9 +91,10 @@ export default function QRCodeBox() {
       setQrCode(qrImageUrl);
       setIsGenerating(false);
       setConnectionAttempts(prev => prev + 1);
-      toast({
-        title: "QR Code Generated",
-        description: "New QR code generated. Scan with WhatsApp to connect.",
+      addNotification({
+        title: "🔗 QR Code Ready!",
+        description: "Open WhatsApp → Settings → Linked Devices → Link a Device, then scan this code",
+        variant: "info",
       });
     });
 
@@ -112,18 +103,19 @@ export default function QRCodeBox() {
       setIsConnected(true);
       setQrCode(null);
       setConnectionAttempts(0);
-      toast({
-        title: "Connected!",
-        description: "WhatsApp Web is connected and ready to send messages.",
+      addNotification({
+        title: "🎉 WhatsApp Connected!",
+        description: "Your WhatsApp is now linked and ready to send bulk messages. You can start composing your message!",
+        variant: "success",
       });
     });
 
     socket.on("disconnected", () => {
       setIsConnected(false);
-      toast({
-        title: "Disconnected",
-        description: "WhatsApp Web has been disconnected.",
-        variant: "destructive",
+      addNotification({
+        title: "⚠️ Connection Lost",
+        description: "WhatsApp Web has been disconnected. Generate a new QR code to reconnect.",
+        variant: "warning",
       });
     });
 
@@ -132,7 +124,7 @@ export default function QRCodeBox() {
       socket.off("connected");
       socket.off("disconnected");
     };
-  }, [toast]);
+  }, [addNotification]);
 
   const handleGenerateQR = async () => {
     console.log("🔄 Generating QR code...");
@@ -144,10 +136,10 @@ export default function QRCodeBox() {
     } catch (error) {
       console.error("❌ Error generating QR:", error);
       setIsGenerating(false);
-      toast({
-        title: "Error",
-        description: "Failed to generate QR code. Please try again.",
-        variant: "destructive",
+      addNotification({
+        title: "❌ QR Generation Failed",
+        description: "Unable to generate QR code. Check your connection and try again.",
+        variant: "error",
       });
     }
   };
@@ -162,60 +154,73 @@ export default function QRCodeBox() {
     );
   }
 
-  // Mobile device warning
+  // Mobile device guidance
   if (isMobile) {
     return (
       <div className="cw-qrcard">
         <div className="cw-qrcard-inner">
           <div className="cw-text-center cw-mb-lg">
             <div className="cw-flex cw-justify-center cw-mb-md">
-              <div style={{ width: '60px', height: '60px', background: '#F59E0B', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Smartphone size={28} color="white" />
+              <div className="cw-mobile-icon">
+                <Monitor size={24} color="white" />
+                <Smartphone size={16} className="cw-mobile-icon-overlay" />
               </div>
             </div>
-            <h3 className="cw-card-title cw-text-center">Need a Computer?</h3>
-            <p style={{ color: '#69707a', marginBottom: '1.5rem' }}>
-              📱 You're on your phone! QR codes need to be scanned, not viewed.
+            <h3 className="cw-card-title cw-text-center">Desktop Required</h3>
+            <p className="cw-mobile-description">
+              WhatsApp QR codes work by scanning from one device to another. Since you're already on your phone with WhatsApp, 
+              you need a computer to display the QR code so your phone can scan it.
             </p>
           </div>
           
-          <div style={{ padding: '16px', background: 'rgba(23, 165, 137, 0.1)', borderRadius: '10px', marginBottom: '1rem' }}>
-            <h4 style={{ fontWeight: '600', color: '#17A589', marginBottom: '12px' }}>
-              💡 Here's what to do:
+          <div className="cw-mobile-steps">
+            <h4 className="cw-mobile-steps-title">
+              🚀 Quick Setup Guide:
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.875rem' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>1</span>
-                <span>Open this website on your computer or laptop</span>
+            <div className="cw-mobile-steps-list">
+              <div className="cw-mobile-step">
+                <span className="cw-mobile-step-number">1</span>
+                <div className="cw-mobile-step-content">
+                  <strong>Get to your computer</strong>
+                  <span>Open this website on your laptop or desktop</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>2</span>
-                <span>Click "Generate QR Code" on the computer</span>
+              <div className="cw-mobile-step">
+                <span className="cw-mobile-step-number">2</span>
+                <div className="cw-mobile-step-content">
+                  <strong>Generate QR code</strong>
+                  <span>Click "Generate QR Code" on the computer</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>3</span>
-                <span>Use this phone to scan the QR code from the computer screen</span>
+              <div className="cw-mobile-step">
+                <span className="cw-mobile-step-number">3</span>
+                <div className="cw-mobile-step-content">
+                  <strong>Scan with this phone</strong>
+                  <span>Use WhatsApp to scan the QR from the computer screen</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div style={{ padding: '12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
-            <p style={{ color: '#34D399', fontSize: '0.875rem', margin: 0 }}>
-              💡 <strong>Pro Tip:</strong> Copy this link and send it to yourself to open on computer
-            </p>
+          <div className="cw-mobile-tip">
+            <div className="cw-mobile-tip-icon">💡</div>
+            <div>
+              <strong>Pro Tip:</strong> Copy this link below and send it to yourself. 
+              Then open it on your computer to get started!
+            </div>
           </div>
 
           <button 
             onClick={() => {
               const currentUrl = window.location.href;
               navigator.clipboard?.writeText(currentUrl);
-              toast({
-                title: "Link Copied! 📋",
-                description: "Now open this link on your computer",
+              addNotification({
+                title: "📋 Link Copied!",
+                description: "Now send this link to yourself and open it on your computer",
+                variant: "success",
               });
             }}
-            className="cw-btn cw-btn-primary cw-btn-lg"
-            style={{ width: '100%' }}
+            className="cw-btn cw-btn-primary cw-btn-lg cw-mobile-copy-btn"
           >
             <ExternalLink size={20} />
             Copy Website Link

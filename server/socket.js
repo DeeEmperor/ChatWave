@@ -23,6 +23,27 @@ export function setupSocket(io) {
     try {
       // Use temporary auth directory in production environments
       const authDir = process.env.NODE_ENV === 'production' ? `/tmp/auth-${Date.now()}` : "auth";
+      
+      // Clear any existing auth state first to force QR generation
+      try {
+        if (process.env.NODE_ENV === 'production') {
+          const files = fs.readdirSync('/tmp').filter(f => f.startsWith('auth-'));
+          files.forEach(file => {
+            try {
+              fs.rmSync(`/tmp/${file}`, { recursive: true, force: true });
+            } catch (e) {
+              console.log(`Failed to remove ${file}:`, e.message);
+            }
+          });
+        } else {
+          if (fs.existsSync("auth")) {
+            fs.rmSync("auth", { recursive: true, force: true });
+          }
+        }
+      } catch (error) {
+        console.log("Auth cleanup (this is normal):", error.message);
+      }
+      
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
       sock = makeWASocket({
@@ -57,10 +78,9 @@ export function setupSocket(io) {
           whatsappSocket = null; // Clear socket reference
           io.emit("disconnected");
 
-          // Auto-restart if connection closes unexpectedly
+          // Don't auto-restart - let user manually generate new QR
           if (lastDisconnect?.error?.output?.statusCode !== 401) {
-            console.log("Attempting to reconnect...");
-            setTimeout(() => startSocket(), 2000);
+            console.log("Connection lost. User needs to generate new QR code.");
           }
         }
       });
@@ -77,6 +97,14 @@ export function setupSocket(io) {
     // Listen for "generate-new-qr" event from the frontend
     socket.on("generate-new-qr", async () => {
       console.log("Generating new QR code...");
+      
+      // Don't generate if already connected
+      if (connectionState.isConnected) {
+        console.log("Already connected to WhatsApp");
+        io.emit("connected");
+        return;
+      }
+      
       // End existing socket
       if (sock) {
         sock.end();
@@ -118,5 +146,5 @@ export function setupSocket(io) {
     });
   });
 
-  startSocket();
+  // Don't auto-start socket - only generate QR when user requests it
 }

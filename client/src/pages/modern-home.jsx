@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Users, BarChart3, Settings, Activity } from 'lucide-react';
 import QRCodeBox from '../components/QRCodeBox';
 import ComposeCard from '../components/ComposeCard';
@@ -11,12 +11,12 @@ export default function ModernHome() {
     deliveryRate: 0
   });
 
-  const handleStatsUpdate = (newStats) => {
+  const handleStatsUpdate = useCallback((newStats) => {
     setStats(prev => ({
       ...prev,
       ...newStats
     }));
-  };
+  }, []);
   return (
     <div className="cw-app">
       {/* Header with glassmorphism */}
