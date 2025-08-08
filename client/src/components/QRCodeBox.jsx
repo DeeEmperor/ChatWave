@@ -154,216 +154,186 @@ export default function QRCodeBox() {
 
   if (isConnected) {
     return (
-      <Card className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 border-emerald-300 shadow-xl shadow-emerald-500/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/15"></div>
-        <div className="relative z-10">
-        <CardHeader className="text-center pb-6">
-          <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-green-500 via-emerald-600 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3">
-            <CheckCircle2 className="w-10 h-10 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent flex items-center justify-center gap-3">
-            <Wifi className="w-6 h-6 text-green-600" />
-            WhatsApp Connected
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-green-700 mb-4 text-lg leading-relaxed">
-            🎉 Great! Your WhatsApp is now connected.
-          </p>
-          <p className="text-green-600 mb-6 text-sm">
-            You can now send messages to multiple contacts at once!
-          </p>
-          <Badge variant="outline" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-400 px-4 py-2 text-sm font-medium">
-            <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse shadow-sm"></div>
-            Connected & Ready
-          </Badge>
-        </CardContent>
-        </div>
-      </Card>
+      <div className="cw-qrcard-connected">
+        <div className="w-3 h-3 bg-white rounded-full cw-pulse"></div>
+        <Wifi size={16} />
+        WhatsApp Connected
+      </div>
     );
   }
 
   // Mobile device warning
   if (isMobile) {
     return (
-      <Card className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-100 border-orange-300 shadow-xl shadow-orange-500/20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/10"></div>
-        <div className="relative z-10">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl flex items-center justify-center shadow-2xl">
-              <Smartphone className="w-10 h-10 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-700 to-amber-700 bg-clip-text text-transparent flex items-center justify-center gap-3">
-              <Monitor className="w-6 h-6 text-orange-600" />
-              Need a Computer?
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-6">
-            <p className="text-orange-700 text-lg leading-relaxed">
-              📱 You're on your phone! QR codes need to be scanned, not viewed.
-            </p>
-            
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-left">
-              <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                💡 Here's what to do:
-              </h4>
-              <div className="space-y-3 text-blue-700 text-sm">
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                  <span>Open this website on your computer or laptop</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                  <span>Click "Generate QR Code" on the computer</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                  <span>Use this phone to scan the QR code from the computer screen</span>
-                </div>
+      <div className="cw-qrcard">
+        <div className="cw-qrcard-inner">
+          <div className="cw-text-center cw-mb-lg">
+            <div className="cw-flex cw-justify-center cw-mb-md">
+              <div style={{ width: '60px', height: '60px', background: '#F59E0B', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Smartphone size={28} color="white" />
               </div>
             </div>
-
-            <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-              <p className="text-green-700 text-sm">
-                💡 <strong>Pro Tip:</strong> Copy this link and send it to yourself to open on computer
-              </p>
+            <h3 className="cw-card-title cw-text-center">Need a Computer?</h3>
+            <p style={{ color: '#69707a', marginBottom: '1.5rem' }}>
+              📱 You're on your phone! QR codes need to be scanned, not viewed.
+            </p>
+          </div>
+          
+          <div style={{ padding: '16px', background: 'rgba(23, 165, 137, 0.1)', borderRadius: '10px', marginBottom: '1rem' }}>
+            <h4 style={{ fontWeight: '600', color: '#17A589', marginBottom: '12px' }}>
+              💡 Here's what to do:
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>1</span>
+                <span>Open this website on your computer or laptop</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>2</span>
+                <span>Click "Generate QR Code" on the computer</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>3</span>
+                <span>Use this phone to scan the QR code from the computer screen</span>
+              </div>
             </div>
+          </div>
 
-            <Button 
-              onClick={() => {
-                const currentUrl = window.location.href;
-                navigator.clipboard?.writeText(currentUrl);
-                toast({
-                  title: "Link Copied! 📋",
-                  description: "Now open this link on your computer",
-                });
-              }}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              size="lg"
-            >
-              <ExternalLink className="w-5 h-5 mr-3" />
-              <span className="font-medium">Copy Website Link</span>
-            </Button>
-          </CardContent>
+          <div style={{ padding: '12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
+            <p style={{ color: '#34D399', fontSize: '0.875rem', margin: 0 }}>
+              💡 <strong>Pro Tip:</strong> Copy this link and send it to yourself to open on computer
+            </p>
+          </div>
+
+          <button 
+            onClick={() => {
+              const currentUrl = window.location.href;
+              navigator.clipboard?.writeText(currentUrl);
+              toast({
+                title: "Link Copied! 📋",
+                description: "Now open this link on your computer",
+              });
+            }}
+            className="cw-btn cw-btn-primary cw-btn-lg"
+            style={{ width: '100%' }}
+          >
+            <ExternalLink size={20} />
+            Copy Website Link
+          </button>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 border-blue-300 shadow-xl shadow-blue-500/20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/10"></div>
-      <div className="relative z-10">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-slate-800">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <QrCode className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            WhatsApp Connection
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="text-center">
-          <div className="mb-6 flex items-center justify-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center shadow-md border-2 border-red-200">
-              <WifiOff className="w-8 h-8 text-red-500" />
+    <div className="cw-qrcard">
+      <div className="cw-qrcard-inner">
+        <div className="cw-card-header">
+          <div className="cw-flex cw-items-center cw-gap-md">
+            <div className="cw-compose-icon">
+              <QrCode size={20} />
+            </div>
+            <div>
+              <h2 className="cw-card-title">WhatsApp Connection</h2>
+              <p className="cw-card-subtitle">Connect to start messaging</p>
             </div>
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-3">Connect Your WhatsApp</h3>
-          <p className="text-slate-600 mb-4 leading-relaxed">
+        </div>
+        
+        <div className="cw-text-center cw-mb-lg">
+          <div className="cw-flex cw-justify-center cw-mb-md">
+            <div style={{ width: '60px', height: '60px', background: '#EF4444', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <WifiOff size={28} color="white" />
+            </div>
+          </div>
+          <h3 className="cw-card-title">Connect Your WhatsApp</h3>
+          <p className="cw-card-subtitle cw-mb-lg">
             Link your WhatsApp to send messages to multiple contacts at once
           </p>
           
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-left">
-            <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+          <div style={{ padding: '16px', background: 'rgba(23, 165, 137, 0.1)', borderRadius: '10px', marginBottom: '1.5rem', textAlign: 'left' }}>
+            <h4 style={{ fontWeight: '600', color: '#17A589', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               📋 Simple 3-Step Process:
             </h4>
-            <div className="space-y-2 text-blue-700 text-sm">
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>1</span>
                 <span>Click "Generate QR Code" below</span>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>2</span>
                 <span>Open WhatsApp on your phone → Settings → Linked Devices</span>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <span style={{ width: '24px', height: '24px', background: '#17A589', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0 }}>3</span>
                 <span>Tap "Link a Device" and scan the QR code</span>
               </div>
             </div>
           </div>
 
           {qrCode && (
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
-              <p className="text-sm text-blue-700 font-medium">
+            <div style={{ padding: '12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
+              <p style={{ color: '#34D399', fontSize: '0.875rem', margin: 0, fontWeight: '500' }}>
                 ⏱️ QR code expires in 60 seconds
               </p>
             </div>
           )}
 
-          <Button 
+          <button 
             onClick={handleGenerateQR}
             disabled={isGenerating}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
-            size="lg"
+            className="cw-btn cw-btn-primary cw-btn-lg"
+            style={{ width: '100%' }}
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                <span className="font-medium">Generating QR Code...</span>
+                <div className="cw-spinner"></div>
+                Generating QR Code...
               </>
             ) : (
               <>
-                <QrCode className="w-5 h-5 mr-3" />
-                <span className="font-medium">Generate QR Code</span>
+                <QrCode size={20} />
+                Generate QR Code
               </>
             )}
-          </Button>
+          </button>
         </div>
 
         {(() => {
           console.log("🖼️ QR Code render check:", { qrCode: !!qrCode, qrCodeLength: qrCode?.length });
           return qrCode;
         })() && (
-          <>
-            <Separator className="bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
-            <div className="text-center">
-              <div className="mb-6 p-6 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50 rounded-2xl border-2 border-dashed border-blue-300 shadow-inner">
-                <img 
-                  src={qrCode} 
-                  alt="WhatsApp QR Code" 
-                  className="mx-auto max-w-full h-auto rounded-xl shadow-lg border-4 border-white"
-                  onLoad={() => console.log("✅ QR image loaded successfully")}
-                  onError={(e) => console.error("❌ QR image failed to load:", e)}
-                />
-              </div>
-              <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg">
-                <h4 className="font-semibold text-emerald-800 mb-2 flex items-center justify-center gap-2">
-                  📱 Ready to scan? Here's how:
-                </h4>
-                <div className="text-emerald-700 text-sm space-y-1">
-                  <p>1. Open WhatsApp on your phone</p>
-                  <p>2. Go to Settings → Linked Devices</p>
-                  <p>3. Tap "Link a Device" and scan this QR code</p>
-                </div>
-              </div>
-              <Button
-                onClick={handleGenerateQR}
-                variant="outline"
-                size="sm"
-                className="text-slate-600 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-colors"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                <span className="font-medium">Generate New Code</span>
-              </Button>
+          <div className="cw-text-center">
+            <hr style={{ margin: '24px 0', border: 'none', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(23, 165, 137, 0.3), transparent)' }} />
+            <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.8)', borderRadius: '16px', border: '2px dashed rgba(23, 165, 137, 0.3)', marginBottom: '1.5rem' }}>
+              <img 
+                src={qrCode} 
+                alt="WhatsApp QR Code" 
+                style={{ maxWidth: '100%', height: 'auto', borderRadius: '12px', border: '4px solid white', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
+                onLoad={() => console.log("✅ QR image loaded successfully")}
+                onError={(e) => console.error("❌ QR image failed to load:", e)}
+              />
             </div>
-          </>
+            <div style={{ padding: '16px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '10px', marginBottom: '1rem' }}>
+              <h4 style={{ fontWeight: '600', color: '#34D399', marginBottom: '8px' }}>
+                📱 Ready to scan? Here's how:
+              </h4>
+              <div style={{ color: '#34D399', fontSize: '0.875rem' }}>
+                <p style={{ margin: '4px 0' }}>1. Open WhatsApp on your phone</p>
+                <p style={{ margin: '4px 0' }}>2. Go to Settings → Linked Devices</p>
+                <p style={{ margin: '4px 0' }}>3. Tap "Link a Device" and scan this QR code</p>
+              </div>
+            </div>
+            <button
+              onClick={handleGenerateQR}
+              className="cw-btn cw-btn-secondary"
+            >
+              <RotateCcw size={16} />
+              Generate New Code
+            </button>
+          </div>
         )}
-      </CardContent>
       </div>
-    </Card>
+    </div>
   );
 }
