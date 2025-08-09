@@ -1,8 +1,4 @@
-import {
-  makeWASocket,
-  useMultiFileAuthState,
-  delay,
-} from "@whiskeysockets/baileys";
+import { makeWASocket, useMultiFileAuthState } from "@whiskeysockets/baileys";
 import QRCode from "qrcode";
 import fs from "fs";
 
@@ -21,35 +17,17 @@ export function setupSocket(io) {
 
   async function startSocket() {
     try {
-      // Use temporary auth directory in production environments
-      const authDir = process.env.NODE_ENV === 'production' ? `/tmp/auth-${Date.now()}` : "auth";
-      
-      // Clear any existing auth state first to force QR generation
-      try {
-        if (process.env.NODE_ENV === 'production') {
-          const files = fs.readdirSync('/tmp').filter(f => f.startsWith('auth-'));
-          files.forEach(file => {
-            try {
-              fs.rmSync(`/tmp/${file}`, { recursive: true, force: true });
-            } catch (e) {
-              console.log(`Failed to remove ${file}:`, e.message);
-            }
-          });
-        } else {
-          if (fs.existsSync("auth")) {
-            fs.rmSync("auth", { recursive: true, force: true });
-          }
-        }
-      } catch (error) {
-        console.log("Auth cleanup (this is normal):", error.message);
-      }
-      
+      const authDir =
+        process.env.NODE_ENV === "production"
+          ? `/tmp/auth-${Date.now()}`
+          : "auth";
+
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
       sock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
-        qrTimeout: 60000, // 60 second timeout
+        qrTimeout: 60000,
       });
 
       whatsappSocket = sock; // Store reference globally
@@ -58,30 +36,40 @@ export function setupSocket(io) {
       sock.ev.on("connection.update", async (update) => {
         const { qr, connection, lastDisconnect } = update;
 
+        console.log("Connection update:", {
+          connection,
+          errorCode: lastDisconnect?.error?.output?.statusCode,
+        });
+
         if (qr) {
-          console.log("QR Code generated, emitting to clients...");
+          console.log("📱 QR Code generated");
           const qrImageUrl = await QRCode.toDataURL(qr);
-          console.log("QR code data URL length:", qrImageUrl.length);
           io.emit("qr", qrImageUrl);
-          console.log("QR code emitted to all connected clients");
         }
 
         if (connection === "open") {
-          console.log("✅ WhatsApp connected");
-          connectionState.isConnected = true;
-          io.emit("connected");
+          console.log("✅ WhatsApp connected successfully");
+          console.log("🔄 Waiting 5 seconds for connection to stabilize...");
+
+          // Add stabilization delay like the working terminal version
+          setTimeout(() => {
+            connectionState.isConnected = true;
+            io.emit("connected");
+            console.log("🎉 Connection stabilized and ready!");
+          }, 5000); // 5 second delay for stabilization
         }
 
         if (connection === "close") {
-          console.log("❌ WhatsApp disconnected");
-          connectionState.isConnected = false;
-          whatsappSocket = null; // Clear socket reference
-          io.emit("disconnected");
+          const shouldReconnect =
+            lastDisconnect?.error?.output?.statusCode !== 403;
+          console.log("❌ WhatsApp disconnected", {
+            shouldReconnect,
+            statusCode: lastDisconnect?.error?.output?.statusCode,
+          });
 
-          // Don't auto-restart - let user manually generate new QR
-          if (lastDisconnect?.error?.output?.statusCode !== 401) {
-            console.log("Connection lost. User needs to generate new QR code.");
-          }
+          connectionState.isConnected = false;
+          whatsappSocket = null;
+          io.emit("disconnected");
         }
       });
     } catch (error) {
@@ -97,44 +85,27 @@ export function setupSocket(io) {
     // Listen for "generate-new-qr" event from the frontend
     socket.on("generate-new-qr", async () => {
       console.log("Generating new QR code...");
-      
+
       // Don't generate if already connected
       if (connectionState.isConnected) {
         console.log("Already connected to WhatsApp");
         io.emit("connected");
         return;
       }
-      
+
       // End existing socket
       if (sock) {
         sock.end();
       }
 
-      // Clear auth state to force new QR generation  
+      // Clear any existing auth directory
       try {
-        const authDir = process.env.NODE_ENV === 'production' ? '/tmp' : '.';
-        const authPattern = process.env.NODE_ENV === 'production' ? 'auth-*' : 'auth';
-        
-        if (process.env.NODE_ENV === 'production') {
-          // In production, clean up temp auth directories
-          const files = fs.readdirSync('/tmp').filter(f => f.startsWith('auth-'));
-          files.forEach(file => {
-            try {
-              fs.rmSync(`/tmp/${file}`, { recursive: true, force: true });
-            } catch (e) {
-              console.log(`Failed to remove ${file}:`, e.message);
-            }
-          });
-        } else {
-          // In development, remove auth directory
-          if (fs.existsSync("auth")) {
-            fs.rmSync("auth", { recursive: true, force: true });
-          }
+        if (fs.existsSync("auth")) {
+          fs.rmSync("auth", { recursive: true, force: true });
+          console.log("Cleared existing auth directory");
         }
       } catch (error) {
-        console.log("Error clearing auth (this is expected in production):", error);
-        // In production environments like Render, file operations may fail
-        // This is expected and shouldn't prevent QR generation
+        console.log("Error clearing auth:", error.message);
       }
 
       // Reset connection state

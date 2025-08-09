@@ -175,7 +175,7 @@ export default function QRCodeBox() {
           
           <div className="cw-mobile-steps">
             <h4 className="cw-mobile-steps-title">
-              🚀 Quick Setup Guide:
+               Quick Setup Guide:
             </h4>
             <div className="cw-mobile-steps-list">
               <div className="cw-mobile-step">

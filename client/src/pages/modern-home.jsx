@@ -191,16 +191,19 @@ export default function ModernHome() {
                 <span style={{ color: 'var(--text-body)', fontSize: '0.875rem' }}>
                   Delay Between Messages
                 </span>
-                <select style={{
-                  background: 'var(--card-bg)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '4px 8px',
-                  color: 'var(--text-body)',
-                  fontSize: '0.875rem'
-                }}>
+                <select 
+                  defaultValue="2"
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '4px 8px',
+                    color: 'var(--text-body)',
+                    fontSize: '0.875rem'
+                  }}
+                >
                   <option value="1">1 sec</option>
-                  <option value="2" selected>2 sec</option>
+                  <option value="2">2 sec</option>
                   <option value="5">5 sec</option>
                 </select>
               </div>
