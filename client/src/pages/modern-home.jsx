@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare, Users, BarChart3, Settings, Activity } from 'lucide-react';
 import QRCodeBox from '../components/QRCodeBox';
-import ComposeCard from '../components/ComposeCard';
+import MessageForm from '../components/MessageForm';
 import ChatWindow from '../components/ChatWindow';
 
 export default function ModernHome() {
@@ -77,7 +77,7 @@ export default function ModernHome() {
       <div className="cw-main-layout">
         <div className="cw-content">
           {/* Main compose area */}
-          <ComposeCard onStatsUpdate={handleStatsUpdate} />
+          <MessageForm />
           
           {/* Statistics cards */}
           <div className="cw-stats">
