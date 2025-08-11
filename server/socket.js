@@ -1,4 +1,4 @@
-import { makeWASocket, useMultiFileAuthState } from "@whiskeysockets/baileys";
+import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } from "@whiskeysockets/baileys";
 import QRCode from "qrcode";
 import fs from "fs";
 
@@ -22,12 +22,18 @@ export function setupSocket(io) {
 
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
+      const { version } = await fetchLatestBaileysVersion();
+      console.log("Using Baileys version:", version);
+
       sock = makeWASocket({
+        version,
         auth: state,
         // Identify consistently like a desktop browser
-        browser: ["ChatWave", "Chrome", "1.0.0"],
+        browser: ["Desktop", "Chrome", "120.0.0"],
         printQRInTerminal: true,
         qrTimeout: 60000,
+        markOnlineOnConnect: false,
+        syncFullHistory: false,
       });
 
       whatsappSocket = sock; // Store reference globally
@@ -70,14 +76,14 @@ export function setupSocket(io) {
 
         if (connection === "open") {
           console.log("✅ WhatsApp connected successfully");
-          console.log("🔄 Waiting 5 seconds for connection to stabilize...");
+          console.log("🔄 Waiting 8 seconds for connection to stabilize...");
 
-          // Add stabilization delay like the working terminal version
+          // Slightly longer stabilization to match terminal behavior
           setTimeout(() => {
             connectionState.isConnected = true;
             io.emit("connected");
             console.log("🎉 Connection stabilized and ready!");
-          }, 5000); // 5 second delay for stabilization
+          }, 8000);
         }
 
         if (connection === "close") {
