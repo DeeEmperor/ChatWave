@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNotification } from "./NotificationContainer";
 import io from "socket.io-client";
@@ -26,23 +26,61 @@ console.log("🔍 Debug info:", {
 });
 console.log("🔗 Connecting to Socket.IO at:", apiUrl);
 
-const socket = io(apiUrl, {
-  transports: ['websocket', 'polling'],
-  timeout: 20000,
-});
+function getSocket() {
+  if (typeof window !== 'undefined') {
+    // Reuse a single Socket.IO instance across HMR reloads
+    if (!window.__CW_SOCKET__) {
+      window.__CW_SOCKET__ = io(apiUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      });
+    }
+    return window.__CW_SOCKET__;
+  }
+  return io(apiUrl, { transports: ['websocket', 'polling'], timeout: 20000 });
+}
+
+const socket = getSocket();
 
 // Debug Socket.IO connection
 socket.on("connect", () => {
   console.log("✅ Socket.IO connected:", socket.id);
 });
 
-socket.on("disconnect", () => {
-  console.log("❌ Socket.IO disconnected");
+socket.on("disconnect", (reason) => {
+  console.log("❌ Socket.IO disconnected", { reason });
 });
 
 socket.on("connect_error", (error) => {
-  console.error("❌ Socket.IO connection error:", error);
-}); 
+  console.error("❌ Socket.IO connection error:", error.message || error);
+});
+
+socket.io.on("reconnect_attempt", (attempt) => {
+  console.log("↻ Reconnect attempt", attempt);
+});
+
+socket.io.on("error", (err) => {
+  console.error("❌ Socket.IO manager error:", err);
+});
+
+socket.on("error", (err) => {
+  console.error("❌ Socket.IO error event:", err);
+});
+
+// Log all events in dev
+if (import.meta.env.DEV) {
+  socket.onAny((event, ...args) => {
+    try {
+      const a0 = args?.[0];
+      const hint = typeof a0 === 'string' ? a0.slice(0, 30) : (a0 && typeof a0 === 'object' ? (a0.format || Object.keys(a0).join(',')) : typeof a0);
+      console.log("⚡ socket event:", event, hint);
+    } catch {}
+  });
+}
+ 
 
 // Mobile device detection
 const isMobileDevice = () => {
@@ -56,6 +94,11 @@ export default function QRCodeBox() {
   const [qrCode, setQrCode] = useState(null);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasReceivedQR, setHasReceivedQR] = useState(false);
+  const disconnectTimerRef = useRef(null);
+  const hadConnectedRef = useRef(false);
+  const lastGenerateRef = useRef(0);
+  const lastQrRef = useRef(0);
   const { addNotification } = useNotification();
 
   const { data: qrData, refetch } = useQuery({
@@ -79,18 +122,27 @@ export default function QRCodeBox() {
     console.log("🔧 Setting up Socket.IO event listeners...");
     
     // Listen for QR code from the backend
-    socket.on("qr", (qrImageUrl) => {
-      console.log("📱 QR code received from backend!");
+    socket.on("qr", (payload) => {
+      // Support both legacy string PNG and new object SVG payload
+      const dataUrl = typeof payload === 'string' ? payload : payload?.dataUrl;
+      const format = typeof payload === 'string' ? 'png' : payload?.format;
+      console.log("📱 QR code received from backend!", { format });
       console.log("🔍 QR data details:", {
-        received: !!qrImageUrl,
-        length: qrImageUrl?.length,
-        type: typeof qrImageUrl,
-        starts_with: qrImageUrl?.substring(0, 50)
+        received: !!dataUrl,
+        length: dataUrl?.length,
+        type: typeof dataUrl,
+        starts_with: dataUrl?.substring(0, 50)
       });
       
-      setQrCode(qrImageUrl);
+      setQrCode(dataUrl);
+      setHasReceivedQR(true);
+      lastQrRef.current = Date.now();
       setIsGenerating(false);
       setConnectionAttempts(prev => prev + 1);
+      if (disconnectTimerRef.current) {
+        clearTimeout(disconnectTimerRef.current);
+        disconnectTimerRef.current = null;
+      }
       addNotification({
         title: "🔗 QR Code Ready!",
         description: "Open WhatsApp → Settings → Linked Devices → Link a Device, then scan this code",
@@ -101,6 +153,7 @@ export default function QRCodeBox() {
     // Listen for connection status updates
     socket.on("connected", () => {
       setIsConnected(true);
+      hadConnectedRef.current = true;
       setQrCode(null);
       setConnectionAttempts(0);
       addNotification({
@@ -111,18 +164,32 @@ export default function QRCodeBox() {
     });
 
     socket.on("disconnected", () => {
-      setIsConnected(false);
-      addNotification({
-        title: "⚠️ Connection Lost",
-        description: "WhatsApp Web has been disconnected. Generate a new QR code to reconnect.",
-        variant: "warning",
-      });
+      // Debounce & suppress false-positive disconnects during setup
+      if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
+      disconnectTimerRef.current = setTimeout(() => {
+        const now = Date.now();
+        const recentlyGenerated = now - (lastGenerateRef.current || 0) < 5000;
+        const recentlyGotQR = now - (lastQrRef.current || 0) < 5000;
+        const shouldNotify = hadConnectedRef.current || (!recentlyGenerated && hasReceivedQR && !recentlyGotQR);
+
+        setIsConnected(false);
+        if (shouldNotify) {
+          addNotification({
+            title: "⚠️ Connection Lost",
+            description: "WhatsApp Web has been disconnected. Generate a new QR code to reconnect.",
+            variant: "warning",
+          });
+        } else {
+          console.log("ℹ️ Suppressed early disconnect notification (setup phase)");
+        }
+      }, 1500);
     });
 
     return () => {
       socket.off("qr");
       socket.off("connected");
       socket.off("disconnected");
+      // Do not disconnect the shared socket; just remove listeners
     };
   }, [addNotification]);
 
@@ -130,6 +197,8 @@ export default function QRCodeBox() {
     console.log("🔄 Generating QR code...");
     setIsGenerating(true);
     setQrCode(null);
+    setHasReceivedQR(false);
+    lastGenerateRef.current = Date.now();
     try {
       console.log("📤 Emitting generate-new-qr event");
       socket.emit("generate-new-qr");
@@ -310,34 +379,33 @@ export default function QRCodeBox() {
         })() && (
           <div className="cw-text-center">
             <hr style={{ margin: '24px 0', border: 'none', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(23, 165, 137, 0.3), transparent)' }} />
-            <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.8)', borderRadius: '16px', border: '2px dashed rgba(23, 165, 137, 0.3)', marginBottom: '1.5rem' }}>
-              <img 
-                src={qrCode} 
-                alt="WhatsApp QR Code" 
-                style={{ maxWidth: '100%', height: 'auto', borderRadius: '12px', border: '4px solid white', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}
-                onLoad={() => console.log("✅ QR image loaded successfully")}
-                onError={(e) => console.error("❌ QR image failed to load:", e)}
-              />
+            <div style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.85)', borderRadius: '12px', border: '1px solid rgba(23, 165, 137, 0.2)', marginBottom: '1rem', display: 'inline-block' }}>
+            <img 
+            src={qrCode} 
+            alt="WhatsApp QR Code" 
+            style={{ width: 280, height: 280, imageRendering: 'crisp-edges', borderRadius: '8px', border: '3px solid white', boxShadow: '0 6px 16px rgba(0,0,0,0.08)' }}
+            onLoad={() => console.log("✅ QR image loaded successfully")}
+            onError={(e) => console.error("❌ QR image failed to load:", e)}
+            draggable={false}
+            />
             </div>
-            <div style={{ padding: '16px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '10px', marginBottom: '1rem' }}>
-              <h4 style={{ fontWeight: '600', color: '#34D399', marginBottom: '8px' }}>
-                📱 Ready to scan? Here's how:
-              </h4>
-              <div style={{ color: '#34D399', fontSize: '0.875rem' }}>
-                <p style={{ margin: '4px 0' }}>1. Open WhatsApp on your phone</p>
-                <p style={{ margin: '4px 0' }}>2. Go to Settings → Linked Devices</p>
-                <p style={{ margin: '4px 0' }}>3. Tap "Link a Device" and scan this QR code</p>
-              </div>
+            <div style={{ padding: '10px', background: 'rgba(52, 211, 153, 0.08)', borderRadius: '8px', marginBottom: '0.75rem' }}>
+            <div style={{ color: '#34D399', fontSize: '0.85rem' }}>
+            Scan via WhatsApp → Settings → Linked Devices → Link a device
+            </div>
             </div>
             <button
-              onClick={handleGenerateQR}
-              className="cw-btn cw-btn-secondary"
+            onClick={handleGenerateQR}
+            className="cw-btn cw-btn-secondary"
+            style={{ marginTop: 8 }}
             >
               <RotateCcw size={16} />
-              Generate New Code
+            New QR
             </button>
           </div>
         )}
+
+
       </div>
     </div>
   );

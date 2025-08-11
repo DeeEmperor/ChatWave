@@ -17,15 +17,15 @@ export function setupSocket(io) {
 
   async function startSocket() {
     try {
-      const authDir =
-        process.env.NODE_ENV === "production"
-          ? `/tmp/auth-${Date.now()}`
-          : "auth";
+      // Use a stable, persistent auth directory in all environments
+      const authDir = process.env.WA_AUTH_DIR || "auth";
 
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
       sock = makeWASocket({
         auth: state,
+        // Identify consistently like a desktop browser
+        browser: ["ChatWave", "Chrome", "1.0.0"],
         printQRInTerminal: true,
         qrTimeout: 60000,
       });
@@ -43,8 +43,29 @@ export function setupSocket(io) {
 
         if (qr) {
           console.log("📱 QR Code generated");
-          const qrImageUrl = await QRCode.toDataURL(qr);
-          io.emit("qr", qrImageUrl);
+          // Generate crisp SVG and send as data URL to avoid raster scaling issues
+          const svg = await QRCode.toString(qr, {
+            type: "svg",
+            errorCorrectionLevel: "M",
+            margin: 4,
+            width: 320,
+            color: {
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
+          });
+          const qrImageUrl = `data:image/svg+xml;base64,${Buffer.from(
+            svg
+          ).toString("base64")}`;
+          console.log("Emitting QR payload as SVG object", {
+            len: qrImageUrl.length,
+          });
+          io.emit("qr", {
+            format: "svg",
+            width: 320,
+            margin: 4,
+            dataUrl: qrImageUrl,
+          });
         }
 
         if (connection === "open") {
@@ -98,21 +119,11 @@ export function setupSocket(io) {
         sock.end();
       }
 
-      // Clear any existing auth directory
-      try {
-        if (fs.existsSync("auth")) {
-          fs.rmSync("auth", { recursive: true, force: true });
-          console.log("Cleared existing auth directory");
-        }
-      } catch (error) {
-        console.log("Error clearing auth:", error.message);
-      }
-
-      // Reset connection state
+      // Do not clear auth by default; allow persistent session to link properly
       connectionState.isConnected = false;
       whatsappSocket = null;
 
-      // Start fresh socket
+      // Start (or restart) socket using existing auth state
       await startSocket();
     });
   });
