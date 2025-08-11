@@ -1,4 +1,8 @@
-import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } from "@whiskeysockets/baileys";
+import {
+  makeWASocket,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+} from "@whiskeysockets/baileys";
 import QRCode from "qrcode";
 import fs from "fs";
 
@@ -15,10 +19,13 @@ export function setupSocket(io) {
   global.getWhatsAppConnectionState = () => connectionState.isConnected;
   global.getWhatsAppSocket = () => whatsappSocket;
 
+  let currentAuthDir = null;
+
   async function startSocket() {
     try {
       // Use a stable, persistent auth directory in all environments
       const authDir = process.env.WA_AUTH_DIR || "auth";
+      currentAuthDir = authDir;
 
       const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
@@ -30,7 +37,7 @@ export function setupSocket(io) {
         auth: state,
         // Identify consistently like a desktop browser
         browser: ["Desktop", "Chrome", "120.0.0"],
-        printQRInTerminal: true,
+        // printQRInTerminal is deprecated; we emit QR via connection.update
         qrTimeout: 60000,
         markOnlineOnConnect: false,
         syncFullHistory: false,
@@ -87,16 +94,28 @@ export function setupSocket(io) {
         }
 
         if (connection === "close") {
-          const shouldReconnect =
-            lastDisconnect?.error?.output?.statusCode !== 403;
+          const statusCode = lastDisconnect?.error?.output?.statusCode;
+          const shouldReconnect = statusCode !== 403;
           console.log("❌ WhatsApp disconnected", {
             shouldReconnect,
-            statusCode: lastDisconnect?.error?.output?.statusCode,
+            statusCode,
           });
 
           connectionState.isConnected = false;
           whatsappSocket = null;
           io.emit("disconnected");
+
+          // If unauthorized/expired (401/403), wipe creds and force a fresh QR next time
+          if (statusCode === 401 || statusCode === 403) {
+            try {
+              if (currentAuthDir && fs.existsSync(currentAuthDir)) {
+                fs.rmSync(currentAuthDir, { recursive: true, force: true });
+                console.log("🧹 Cleared auth directory due to", statusCode);
+              }
+            } catch (e) {
+              console.log("Error clearing auth after close:", e?.message);
+            }
+          }
         }
       });
     } catch (error) {
@@ -125,11 +144,20 @@ export function setupSocket(io) {
         sock.end();
       }
 
-      // Do not clear auth by default; allow persistent session to link properly
+      // Force fresh QR: clear auth to avoid 401 loops on stale creds
+      try {
+        if (currentAuthDir && fs.existsSync(currentAuthDir)) {
+          fs.rmSync(currentAuthDir, { recursive: true, force: true });
+          console.log("🧹 Cleared auth directory for fresh QR");
+        }
+      } catch (e) {
+        console.log("Error clearing auth on generate:", e?.message);
+      }
+
       connectionState.isConnected = false;
       whatsappSocket = null;
 
-      // Start (or restart) socket using existing auth state
+      // Start (or restart) socket
       await startSocket();
     });
   });

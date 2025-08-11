@@ -269,45 +269,67 @@ async function sendMessagesWithDelay(messageId: number, phoneNumbers: string[], 
         throw new Error("WhatsApp socket not available");
       }
 
-      // Format phone number for WhatsApp
-      const formattedNumber = formatPhoneNumberForWhatsApp(phoneNumber);
-      console.log(`📞 Formatting ${phoneNumber} → ${formattedNumber}`);
+      // Normalize and check WhatsApp registration before sending
+      const normalized = normalizePhoneNumber(phoneNumber);
+      const waInfo = await sock.onWhatsApp(normalized);
+      const exists = Array.isArray(waInfo) && waInfo[0]?.exists;
+      const targetJid = waInfo?.[0]?.jid || (normalized + '@s.whatsapp.net');
+      if (!exists) {
+        console.warn(`🚫 ${phoneNumber} is not a WhatsApp number`);
+        // Update existing pending status to failed
+        const statuses = await storage.getMessageStatuses(messageId);
+        const pending = statuses.find(s => s.phoneNumber === phoneNumber && s.status === 'pending');
+        if (pending) {
+          await storage.updateMessageStatus(pending.id, { status: 'failed', errorMessage: 'Number is not on WhatsApp' });
+        } else {
+          await storage.createMessageStatus({ messageId, phoneNumber, status: 'failed', errorMessage: 'Number is not on WhatsApp' });
+        }
+        const updatedMessageA = await storage.getMessage(messageId);
+        if (updatedMessageA) {
+          await storage.updateMessage(messageId, { failedCount: updatedMessageA.failedCount + 1 });
+        }
+        continue;
+      }
 
-      // Send actual WhatsApp message
-      await sock.sendMessage(formattedNumber, { 
-        text: message.content 
-      });
+      // Format JID and send
+      console.log(`📞 Sending to ${phoneNumber} → ${targetJid}`);
 
-      console.log(`✅ Message sent to ${phoneNumber}`);
+      try { await sock.presenceSubscribe(targetJid); } catch {}
+      try { await sock.sendPresenceUpdate('available', targetJid); } catch {}
 
-      await storage.createMessageStatus({
-        messageId,
-        phoneNumber,
-        status: "sent"
-      });
+      const sendRes = await sock.sendMessage(targetJid, { text: message.content });
+      console.log(`✅ Message send invoked for ${phoneNumber}`, { key: sendRes?.key });
+
+      // Update existing pending status to sent
+      const statuses = await storage.getMessageStatuses(messageId);
+      const pending = statuses.find(s => s.phoneNumber === phoneNumber && s.status === 'pending');
+      if (pending) {
+        await storage.updateMessageStatus(pending.id, { status: 'sent', errorMessage: undefined });
+      } else {
+        await storage.createMessageStatus({ messageId, phoneNumber, status: 'sent' });
+      }
       
       const updatedMessage = await storage.getMessage(messageId);
       if (updatedMessage) {
-        await storage.updateMessage(messageId, { 
-          sentCount: updatedMessage.sentCount + 1 
-        });
+        await storage.updateMessage(messageId, { sentCount: updatedMessage.sentCount + 1 });
       }
 
     } catch (error) {
-      console.error(`❌ Error sending to ${phoneNumber}:`, error);
+      const errMsg = (error?.message) || (error?.data) || (error?.toString?.() || 'Failed to send message');
+      console.error(`❌ Error sending to ${phoneNumber}:`, errMsg);
       
-      await storage.createMessageStatus({
-        messageId,
-        phoneNumber,
-        status: "failed",
-        errorMessage: error.message || "Failed to send message"
-      });
+      // Update existing pending status to failed
+      const statuses = await storage.getMessageStatuses(messageId);
+      const pending = statuses.find(s => s.phoneNumber === phoneNumber && s.status === 'pending');
+      if (pending) {
+        await storage.updateMessageStatus(pending.id, { status: 'failed', errorMessage: String(errMsg) });
+      } else {
+        await storage.createMessageStatus({ messageId, phoneNumber, status: 'failed', errorMessage: String(errMsg) });
+      }
       
       const updatedMessage = await storage.getMessage(messageId);
       if (updatedMessage) {
-        await storage.updateMessage(messageId, { 
-          failedCount: updatedMessage.failedCount + 1 
-        });
+        await storage.updateMessage(messageId, { failedCount: updatedMessage.failedCount + 1 });
       }
     }
   }
