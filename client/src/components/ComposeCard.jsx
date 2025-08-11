@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, Users, FileText, Upload, X } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ComposeCard({ onStatsUpdate }) {
   const [message, setMessage] = useState('');
@@ -11,42 +13,51 @@ export default function ComposeCard({ onStatsUpdate }) {
   const [csvFileName, setCsvFileName] = useState('');
   const fileInputRef = useRef(null);
 
+  const { toast } = useToast();
+
   const handleSend = async () => {
     if (!message.trim()) return;
     if (inputMethod === 'numbers' && !phoneNumbers.trim()) return;
-    
-    const totalContacts = getContactCount();
-    const contacts = inputMethod === 'numbers' 
-      ? phoneNumbers.split('\n').filter(num => num.trim())
-      : Array(45).fill().map((_, i) => `+123456789${i}`); // Placeholder for CSV
-    
-    setIsLoading(true);
-    setSendingProgress({ sent: 0, total: totalContacts, currentNumber: '' });
-    
-    // Simulate sending messages with progress
-    for (let i = 0; i < contacts.length; i++) {
-      const currentContact = contacts[i];
-      setSendingProgress({ 
-        sent: i + 1, 
-        total: totalContacts, 
-        currentNumber: currentContact 
-      });
-      
-      // Simulate delay between messages (1-3 seconds)
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
-      
-      // Update stats after sending
-      if (onStatsUpdate) {
-        onStatsUpdate({
-          messagesSent: i + 1,
-          deliveryRate: Math.random() * 10 + 90 // Simulate 90-100% delivery rate
-        });
-      }
+
+    const lines = inputMethod === 'numbers' 
+      ? phoneNumbers.split('\n')
+      : []; // wire CSV here if needed
+
+    const contacts = lines
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(formatPhoneNumber)
+      .filter(isValidPhoneNumber);
+
+    if (contacts.length === 0) {
+      toast({ title: 'No valid recipients', description: 'Please add valid phone numbers', variant: 'destructive' });
+      return;
     }
-    
-    setIsLoading(false);
-    setMessage('');
-    setSendingProgress({ sent: 0, total: 0, currentNumber: '' });
+
+    setIsLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/send', {
+        content: message,
+        delay: 6,
+        phoneNumbers: contacts,
+      });
+
+      toast({ title: 'Messages queued', description: `${contacts.length} message(s) queued.` });
+      if (res?.messageId) {
+        localStorage.setItem('latestMessageId', String(res.messageId));
+        localStorage.setItem('campaignStartTime', String(Date.now()));
+      }
+
+      // optional: inform parent to update stats
+      if (onStatsUpdate) onStatsUpdate({ messagesSent: 0 });
+
+      setMessage('');
+      setPhoneNumbers('');
+    } catch (e) {
+      toast({ title: 'Failed to queue', description: e?.message || 'Request failed', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Phone number formatting - digits only output for WhatsApp
