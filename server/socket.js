@@ -20,6 +20,7 @@ export function setupSocket(io) {
   global.getWhatsAppSocket = () => whatsappSocket;
 
   let currentAuthDir = null;
+  let isRestarting = false;
 
   async function startSocket() {
     try {
@@ -115,6 +116,20 @@ export function setupSocket(io) {
             } catch (e) {
               console.log("Error clearing auth after close:", e?.message);
             }
+          } else if (shouldReconnect && !isRestarting) {
+            // Backoff 3-5s then restart socket (keep auth)
+            isRestarting = true;
+            const delayMs = 3000 + Math.floor(Math.random() * 2000);
+            console.log(`🔁 Reconnecting in ${delayMs}ms...`);
+            setTimeout(async () => {
+              try {
+                await startSocket();
+              } catch (e) {
+                console.error("Restart error:", e?.message || e);
+              } finally {
+                isRestarting = false;
+              }
+            }, delayMs);
           }
         }
       });
