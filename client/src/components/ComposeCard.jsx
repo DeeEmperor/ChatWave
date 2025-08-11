@@ -8,7 +8,7 @@ export default function ComposeCard({ onStatsUpdate }) {
   const [phoneNumbers, setPhoneNumbers] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [inputMethod, setInputMethod] = useState('numbers'); // 'numbers' or 'csv'
-  const [sendingProgress, setSendingProgress] = useState({ sent: 0, total: 0, currentNumber: '' });
+  const [sendingProgress, setSendingProgress] = useState({ sent: 0, total: 0, failed: 0 });
   const [csvData, setCsvData] = useState([]);
   const [csvFileName, setCsvFileName] = useState('');
   const fileInputRef = useRef(null);
@@ -19,11 +19,11 @@ export default function ComposeCard({ onStatsUpdate }) {
     if (!message.trim()) return;
     if (inputMethod === 'numbers' && !phoneNumbers.trim()) return;
 
-    const lines = inputMethod === 'numbers' 
-      ? phoneNumbers.split('\n')
-      : []; // wire CSV here if needed
+    const tokens = inputMethod === 'numbers'
+      ? phoneNumbers.split(/[\n,]+/)
+      : [];
 
-    const contacts = lines
+    const contacts = tokens
       .map(l => l.trim())
       .filter(Boolean)
       .map(formatPhoneNumber)
@@ -46,10 +46,11 @@ export default function ComposeCard({ onStatsUpdate }) {
       if (res?.messageId) {
         localStorage.setItem('latestMessageId', String(res.messageId));
         localStorage.setItem('campaignStartTime', String(Date.now()));
+        setSendingProgress({ sent: 0, failed: 0, total: contacts.length });
       }
 
-      // optional: inform parent to update stats
-      if (onStatsUpdate) onStatsUpdate({ messagesSent: 0 });
+      // optional: inform parent to update stats baseline
+      if (onStatsUpdate) onStatsUpdate({ messagesSent: 0, deliveryRate: 0 });
 
       setMessage('');
       setPhoneNumbers('');
@@ -86,23 +87,52 @@ export default function ComposeCard({ onStatsUpdate }) {
     return cleaned.length >= 10 && cleaned.length <= 15;
   };
 
-  // Handle phone number input changes (without auto-formatting on typing)
-  const handlePhoneNumbersChange = (value) => {
-    setPhoneNumbers(value);
-  };
+  // Poll status for latest message to update progress and parent stats
+  useEffect(() => {
+    let timer;
+    const poll = async () => {
+      const id = localStorage.getItem('latestMessageId');
+      if (!id) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') ? 'http://localhost:5000' : 'https://chatwave-64p3.onrender.com')}/api/message/${id}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const total = data?.progress?.total || 0;
+        const sent = data?.progress?.sent || 0;
+        const failed = data?.progress?.failed || 0;
+        setSendingProgress({ total, sent, failed });
+        if (onStatsUpdate && total > 0) {
+          const deliveryRate = total > 0 ? (sent / total) * 100 : 0;
+          onStatsUpdate({ messagesSent: sent, deliveryRate });
+        }
+        // stop polling when completed
+        if (total > 0 && sent + failed >= total) {
+          clearInterval(timer);
+        }
+      } catch {}
+    };
+    timer = setInterval(poll, 2000);
+    poll();
+    return () => clearInterval(timer);
+  }, [onStatsUpdate]);
 
-  // Auto-format phone numbers when user leaves the input field
+  // Handle phone number input changes (supports commas or newlines)
+  const handlePhoneNumbersChange = (value) => {
+  setPhoneNumbers(value);
+  };
+  
+  // Auto-format on blur: split by comma/newline, apply rules, join by newline
   const handlePhoneNumbersBlur = () => {
-    const lines = phoneNumbers.split('\n');
-    const formattedLines = lines.map(line => {
-      const trimmed = line.trim();
-      if (trimmed) {
-        return formatPhoneNumber(trimmed);
-      }
-      return trimmed;
-    });
-    
-    setPhoneNumbers(formattedLines.join('\n'));
+  const tokens = phoneNumbers
+    .split(/[\n,]+/)
+  .map(t => t.trim())
+  .filter(Boolean);
+
+  const formatted = tokens
+  .map(formatPhoneNumber)
+    .filter(isValidPhoneNumber);
+
+  setPhoneNumbers(formatted.join('\n'));
   };
 
   // Handle CSV file upload
