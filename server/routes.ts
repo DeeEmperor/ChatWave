@@ -93,22 +93,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create and send bulk messages
   app.post("/api/send", async (req, res) => {
     try {
+      console.log("➡️ /api/send called", { bodyKeys: Object.keys(req.body || {}) });
+
       if (!isWhatsAppConnected()) {
+        console.log("❌ /api/send rejected: not connected");
         return res.status(400).json({ error: "WhatsApp not connected. Please scan QR code first." });
       }
 
       const validatedData = insertMessageSchema.parse(req.body);
       
       if (validatedData.delay < 6) {
+        console.log("❌ /api/send rejected: delay < 6");
         return res.status(400).json({ error: "Minimum delay is 6 seconds" });
       }
 
       if (!validatedData.phoneNumbers || validatedData.phoneNumbers.length === 0) {
+        console.log("❌ /api/send rejected: no numbers");
         return res.status(400).json({ error: "At least one phone number is required" });
       }
 
       // Normalize phone numbers for storage/display
       const normalizedPhoneNumbers = validatedData.phoneNumbers.map(num => normalizePhoneNumber(num));
+      console.log("🗒️ Normalized numbers:", normalizedPhoneNumbers);
       
       const messageData = {
         ...validatedData,
@@ -116,6 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const message = await storage.createMessage(messageData);
+      console.log("🆔 Created message", { id: message.id, count: normalizedPhoneNumbers.length });
       
       // Create initial status entries for all phone numbers
       for (const phoneNumber of normalizedPhoneNumbers) {
@@ -126,6 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      console.log("▶️ Starting async sender", { id: message.id, delay: validatedData.delay });
       // Start sending messages asynchronously
       sendMessagesWithDelay(message.id, normalizedPhoneNumbers, validatedData.delay);
 
@@ -254,8 +262,11 @@ async function sendMessagesWithDelay(messageId: number, phoneNumbers: string[], 
   // Get WhatsApp socket instance
   const getSocket = global.getWhatsAppSocket;
   
+  console.log("🚚 Sender starting", { messageId, total: phoneNumbers.length, delay });
+
   for (let i = 0; i < phoneNumbers.length; i++) {
     const phoneNumber = phoneNumbers[i];
+    console.log("➡️ Attempt", { index: i + 1, of: phoneNumbers.length, phoneNumber });
     
     // Wait for the specified delay
     if (i > 0) {
@@ -274,6 +285,7 @@ async function sendMessagesWithDelay(messageId: number, phoneNumbers: string[], 
       const waInfo = await sock.onWhatsApp(normalized);
       const exists = Array.isArray(waInfo) && waInfo[0]?.exists;
       const targetJid = waInfo?.[0]?.jid || (normalized + '@s.whatsapp.net');
+      console.log("🔎 Lookup", { normalized, exists, targetJid });
       if (!exists) {
         console.warn(`🚫 ${phoneNumber} is not a WhatsApp number`);
         // Update existing pending status to failed
@@ -333,6 +345,8 @@ async function sendMessagesWithDelay(messageId: number, phoneNumbers: string[], 
       }
     }
   }
+
+  console.log("✅ Sender completed", { messageId });
 
   await storage.updateMessage(messageId, { status: "completed" });
 }
