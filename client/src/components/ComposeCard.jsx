@@ -9,6 +9,22 @@ export default function ComposeCard({ onStatsUpdate }) {
   const [isLoading, setIsLoading] = useState(false);
   const [inputMethod, setInputMethod] = useState('numbers'); // 'numbers' or 'csv'
   const [sendingProgress, setSendingProgress] = useState({ sent: 0, total: 0, failed: 0 });
+  const [delay, setDelay] = useState(6); // 6, 7, or 8 seconds
+  // sync delay from Quick Settings (localStorage)
+  useEffect(() => {
+    const apply = () => {
+      const v = parseInt(localStorage.getItem('sendDelay') || '6', 10);
+      setDelay([6,7,8].includes(v) ? v : 6);
+    };
+    apply();
+    const handler = () => apply();
+    window.addEventListener('sendDelayChanged', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('sendDelayChanged', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
   const [csvData, setCsvData] = useState([]);
   const [csvFileName, setCsvFileName] = useState('');
   const fileInputRef = useRef(null);
@@ -38,7 +54,7 @@ export default function ComposeCard({ onStatsUpdate }) {
     try {
       const res = await apiRequest('POST', '/api/send', {
         content: message,
-        delay: 6,
+        delay,
         phoneNumbers: contacts,
       });
 
@@ -633,7 +649,7 @@ export default function ComposeCard({ onStatsUpdate }) {
                 fontSize: '0.875rem',
                 fontWeight: 600
               }}>
-                {Math.round((sendingProgress.sent / sendingProgress.total) * 100)}%
+                {sendingProgress.total > 0 ? Math.round((sendingProgress.sent / sendingProgress.total) * 100) : 0}%
               </div>
             </div>
             
@@ -651,8 +667,8 @@ export default function ComposeCard({ onStatsUpdate }) {
                 background: 'var(--accent-gradient)',
                 borderRadius: '4px',
                 transition: 'width 0.3s ease',
-                width: `${(sendingProgress.sent / sendingProgress.total) * 100}%`
-              }}></div>
+                width: `${sendingProgress.total > 0 ? (sendingProgress.sent / sendingProgress.total) * 100 : 0}%`
+                }}></div>
             </div>
             
             {/* Current number being sent to */}

@@ -164,23 +164,27 @@ export default function QRCodeBox() {
     });
 
     socket.on("disconnected", () => {
-      // Debounce & suppress false-positive disconnects during setup
+      // Debounce & show a friendlier message during setup
       if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
       disconnectTimerRef.current = setTimeout(() => {
         const now = Date.now();
         const recentlyGenerated = now - (lastGenerateRef.current || 0) < 5000;
         const recentlyGotQR = now - (lastQrRef.current || 0) < 5000;
-        const shouldNotify = hadConnectedRef.current || (!recentlyGenerated && hasReceivedQR && !recentlyGotQR);
+        const isSetupPhase = !hadConnectedRef.current && (recentlyGenerated || recentlyGotQR || !hasReceivedQR);
 
         setIsConnected(false);
-        if (shouldNotify) {
+        if (isSetupPhase) {
+          addNotification({
+            title: "⏳ Connection in progress",
+            description: "Hold on while we complete the WhatsApp pairing...",
+            variant: "info",
+          });
+        } else {
           addNotification({
             title: "⚠️ Connection Lost",
             description: "WhatsApp Web has been disconnected. Generate a new QR code to reconnect.",
             variant: "warning",
           });
-        } else {
-          console.log("ℹ️ Suppressed early disconnect notification (setup phase)");
         }
       }, 1500);
     });

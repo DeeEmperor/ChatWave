@@ -3,12 +3,17 @@ import { MessageSquare, Users, BarChart3, Settings, Activity } from 'lucide-reac
 import QRCodeBox from '../components/QRCodeBox';
 import ComposeCard from '../components/ComposeCard';
 import ChatWindow from '../components/ChatWindow';
+import chatwaveIcon from '../chatwaveIcon.png';
 
 export default function ModernHome() {
   const [stats, setStats] = useState({
     totalContacts: 0,
     messagesSent: 0,
     deliveryRate: 0
+  });
+  const [delaySetting, setDelaySetting] = useState(() => {
+    const v = parseInt(localStorage.getItem('sendDelay') || '6', 10);
+    return [6,7,8].includes(v) ? v : 6;
   });
 
   const handleStatsUpdate = useCallback((newStats) => {
@@ -23,17 +28,13 @@ export default function ModernHome() {
       <header className="cw-header">
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              background: 'var(--accent-gradient)',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
-            }}>
-              <MessageSquare size={24} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img 
+                src={chatwaveIcon} 
+                alt="ChatWave" 
+                style={{ height: 40, width: 'auto', objectFit: 'contain', borderRadius: 8 }} 
+                draggable={false}
+              />
             </div>
             <div>
               <h1 style={{ 
@@ -192,7 +193,13 @@ export default function ModernHome() {
                   Delay Between Messages
                 </span>
                 <select 
-                  defaultValue="2"
+                  value={delaySetting}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    setDelaySetting(v);
+                    localStorage.setItem('sendDelay', String(v));
+                    window.dispatchEvent(new Event('sendDelayChanged'));
+                  }}
                   style={{
                     background: 'var(--card-bg)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -202,9 +209,9 @@ export default function ModernHome() {
                     fontSize: '0.875rem'
                   }}
                 >
-                  <option value="1">1 sec</option>
-                  <option value="2">2 sec</option>
-                  <option value="5">5 sec</option>
+                  <option value="6">6 sec</option>
+                  <option value="7">7 sec</option>
+                  <option value="8">8 sec</option>
                 </select>
               </div>
             </div>
